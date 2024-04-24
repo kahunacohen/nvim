@@ -1,10 +1,17 @@
 return {
     {
+        "hrsh7th/cmp-nvim-lsp"
+    },
+    {
         "L3MON4D3/LuaSnip",
         dependencies = {
             "saadparwaiz1/cmp_luasnip",
             "rafamadriz/friendly-snippets",
-        }
+        },
+        config = function()
+            local ls = require 'luasnip'
+            vim.keymap.set({ "i", "s" }, "<C-L>", function() ls.jump(1) end, { silent = true })
+        end
     },
     {
         "hrsh7th/nvim-cmp",
