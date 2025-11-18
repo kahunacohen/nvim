@@ -14,29 +14,28 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
-
-
 ------------------------------------------------------------
 -- Plugins
 ------------------------------------------------------------
 require("lazy").setup({
 
-  -- Treesitter for syntax highlighting
+  -- Treesitter
   { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
 
-  -- Telescope for fuzzy finding
+  -- Telescope
   { "nvim-lua/plenary.nvim" },
   { "nvim-telescope/telescope.nvim", tag = "0.1.5" },
 
   -- File explorer
   { "nvim-tree/nvim-tree.lua" },
+  { "nvim-tree/nvim-web-devicons" },
 
   -- LSP
   { "neovim/nvim-lspconfig" },
   { "williamboman/mason.nvim" },
   { "williamboman/mason-lspconfig.nvim" },
 
-  -- Autocomplete
+  -- Completion
   { "hrsh7th/nvim-cmp" },
   { "hrsh7th/cmp-nvim-lsp" },
   { "L3MON4D3/LuaSnip" },
@@ -46,27 +45,8 @@ require("lazy").setup({
 
 })
 
--- Nvim-tree setup
-require("nvim-tree").setup({
-  -- optional configurations:
-  view = {
-    width = 30,
-    side = "left",
-  },
-  renderer = {
-    icons = {
-      show = {
-        git = true,
-        folder = true,
-        file = true,
-        folder_arrow = true,
-      },
-    },
-  },
-})
-
 ------------------------------------------------------------
--- Basic settings
+-- Basic Settings
 ------------------------------------------------------------
 vim.opt.number = true
 vim.opt.relativenumber = true
@@ -77,9 +57,10 @@ vim.opt.mouse = "a"
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.termguicolors = true
+vim.g.mapleader = " "
 
 ------------------------------------------------------------
--- Treesitter setup
+-- Treesitter
 ------------------------------------------------------------
 require("nvim-treesitter.configs").setup({
   highlight = { enable = true },
@@ -87,7 +68,7 @@ require("nvim-treesitter.configs").setup({
 })
 
 ------------------------------------------------------------
--- LSP (Neovim 0.11 new API)
+-- LSP (Neovim 0.11 style)
 ------------------------------------------------------------
 require("mason").setup()
 require("mason-lspconfig").setup({
@@ -102,53 +83,80 @@ require("mason-lspconfig").setup({
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 local servers = {
-  "lua_ls",
-  "gopls",
-  "ts_ls",
-  "pyright",
+  lua_ls = {
+    settings = {
+      Lua = {
+        diagnostics = { globals = { "vim" } },
+      },
+    },
+  },
+  gopls = {
+    settings = {
+      gopls = {
+        analyses = { unusedparams = true },
+        staticcheck = true,
+      },
+    },
+  },
+  ts_ls = {},
+  pyright = {},
 }
 
-for _, server in ipairs(servers) do
-  vim.lsp.config[server] = {
-    capabilities = capabilities,
-  }
-  vim.lsp.enable(server)
+for name, config in pairs(servers) do
+  config.capabilities = capabilities
+  vim.lsp.config[name] = config
+  vim.lsp.enable(name)
 end
 
 ------------------------------------------------------------
--- Autocomplete setup
+-- nvim-cmp
 ------------------------------------------------------------
 local cmp = require("cmp")
+
 cmp.setup({
+  snippet = {
+    expand = function(args)
+      require("luasnip").lsp_expand(args.body)
+    end,
+  },
+
   mapping = cmp.mapping.preset.insert({
     ["<CR>"] = cmp.mapping.confirm({ select = true }),
+    ["<C-Space>"] = cmp.mapping.complete(),
+    ["<Tab>"] = cmp.mapping.select_next_item(),
+    ["<S-Tab>"] = cmp.mapping.select_prev_item(),
   }),
+
   sources = {
     { name = "nvim_lsp" },
   },
 })
 
 ------------------------------------------------------------
--- Keybindings
+-- nvim-tree
 ------------------------------------------------------------
-vim.g.mapleader = " "
+require("nvim-tree").setup({})
 
--- Nvim-tree
 vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>")
 
--- Telescope
+------------------------------------------------------------
+-- Telescope keymaps
+------------------------------------------------------------
 vim.keymap.set("n", "<leader>f", ":Telescope find_files<CR>")
 vim.keymap.set("n", "<leader>g", ":Telescope live_grep<CR>")
 
--- LSP basics
+------------------------------------------------------------
+-- LSP keymaps
+------------------------------------------------------------
 vim.keymap.set("n", "gd", vim.lsp.buf.definition)
 vim.keymap.set("n", "gr", vim.lsp.buf.references)
 vim.keymap.set("n", "K", vim.lsp.buf.hover)
 vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename)
-vim.cmd.colorscheme("catppuccin")
+vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action)
 
 ------------------------------------------------------------
--- Done
+-- Colorscheme
 ------------------------------------------------------------
-print("Neovim loaded ✨")
+vim.cmd.colorscheme("catppuccin")
+
 
