@@ -72,7 +72,10 @@ require("lazy").setup({
 
     -- Sidebar-style chat (best UX)
     vim.keymap.set("n", "<leader>cc", function()
-      require("CopilotChat").open({ window = { layout = "vertical" } })
+      require("CopilotChat").open({
+        window = { layout = "vertical" },
+        context = "buffer",
+      })
     end, { desc = "Open Copilot Chat" })
 
     -- Ask about selection
