@@ -63,6 +63,15 @@ vim.g.mapleader = " "
 -- Treesitter
 ------------------------------------------------------------
 require("nvim-treesitter.configs").setup({
+  ensure_installed = {
+    "lua",
+    "go",
+    "vim",
+    "vimdoc",
+    "query",
+    "markdown",
+    "markdown_inline",
+  },
   highlight = { enable = true },
   indent = { enable = true },
 })
@@ -144,6 +153,7 @@ vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>")
 ------------------------------------------------------------
 vim.keymap.set("n", "<leader>f", ":Telescope find_files<CR>")
 vim.keymap.set("n", "<leader>g", ":Telescope live_grep<CR>")
+vim.keymap.set("n", "<leader>b", ":Telescope buffers<CR>")
 
 ------------------------------------------------------------
 -- LSP keymaps
