@@ -1,3 +1,9 @@
+---------------------------------------------------------------
+--- leader keys must be set before plugins are loaded
+------------------------------------------------------------
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
+
 ------------------------------------------------------------
 -- Bootstrap lazy.nvim
 ------------------------------------------------------------
@@ -93,7 +99,6 @@ vim.opt.mouse = "a"
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.termguicolors = true
-vim.g.mapleader = " "
 
 ------------------------------------------------------------
 -- Treesitter
