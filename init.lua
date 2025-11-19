@@ -40,6 +40,20 @@ require("lazy").setup({
   { "hrsh7th/cmp-nvim-lsp" },
   { "L3MON4D3/LuaSnip" },
 
+   -- Copilot
+  {
+    "github/copilot.vim",
+    config = function()
+      -- Don't use <Tab> for Copilot, let nvim-cmp keep it
+      vim.g.copilot_no_tab_map = true
+      -- Accept Copilot suggestion with Ctrl-J in insert mode
+      vim.api.nvim_set_keymap("i", "<C-J>", 'copilot#Accept("<CR>")', {
+        silent = true,
+        expr = true,
+      })
+    end,
+  },
+
   -- Colorscheme
   { "catppuccin/nvim", name = "catppuccin" },
 
@@ -163,6 +177,13 @@ vim.keymap.set("n", "gr", vim.lsp.buf.references)
 vim.keymap.set("n", "K", vim.lsp.buf.hover)
 vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename)
 vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action)
+
+------------------------------------------------------------
+-- Copilot keymaps 
+-------------------------------------------------------------
+vim.keymap.set("i", "<C-k>", "<Plug>(copilot-dismiss)")
+vim.keymap.set("n", "<leader>ce", ":Copilot enable<CR>", { silent = true })
+vim.keymap.set("n", "<leader>cd", ":Copilot disable<CR>", { silent = true })
 
 ------------------------------------------------------------
 -- Colorscheme
