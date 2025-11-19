@@ -53,6 +53,29 @@ require("lazy").setup({
       })
     end,
   },
+  {
+  "CopilotC-Nvim/CopilotChat.nvim",
+  branch = "main",
+  dependencies = {
+    "github/copilot.vim",
+    "nvim-lua/plenary.nvim",
+  },
+  config = function()
+    require("CopilotChat").setup({
+      insert_mode = false,
+    })
+
+    -- Sidebar-style chat (best UX)
+    vim.keymap.set("n", "<leader>cc", function()
+      require("CopilotChat").open({ window = { layout = "vertical" } })
+    end, { desc = "Open Copilot Chat" })
+
+    -- Ask about selection
+    vim.keymap.set("v", "<leader>ca", function()
+      require("CopilotChat").ask()
+    end, { desc = "Ask Copilot About Selection" })
+  end,
+},
 
   -- Colorscheme
   { "catppuccin/nvim", name = "catppuccin" },
