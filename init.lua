@@ -90,6 +90,37 @@ require("lazy").setup({
 
 })
 
+-- CopilotChat: ask about a file selected via Telescope
+vim.keymap.set("n", "<leader>cf", function()
+  local builtin = require("telescope.builtin")
+
+  builtin.find_files({
+    attach_mappings = function(_, map)
+      map("i", "<CR>", function(prompt_bufnr)
+        local action_state = require("telescope.actions.state")
+        local actions = require("telescope.actions")
+
+        local selection = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+
+        -- Build a #file:… reference (full path or relative — up to you)
+        local file = selection.path  -- full path
+        -- OR: local file = selection.filename -- relative (shorter)
+
+        local CopilotChat = require("CopilotChat")
+
+        -- Ask with #file:<path> prefilled
+        CopilotChat.ask("#file:" .. file .. "\n\n", {
+          selection = nil, -- we don't need buffer selection
+        })
+      end)
+
+      return true
+    end,
+  })
+end, { desc = "CopilotChat - Ask about a selected file" })
+
+
 ------------------------------------------------------------
 -- Basic Settings
 ------------------------------------------------------------
