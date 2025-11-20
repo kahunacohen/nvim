@@ -110,9 +110,7 @@ vim.keymap.set("n", "<leader>cf", function()
         local CopilotChat = require("CopilotChat")
 
         -- Ask with #file:<path> prefilled
-        CopilotChat.ask("#file:" .. file .. "\n\n", {
-          selection = nil, -- we don't need buffer selection
-        })
+        CopilotChat.ask("#file:" .. file .. "\n\n", { jump_cursor = true })
       end)
 
       return true
