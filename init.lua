@@ -46,6 +46,17 @@ require("lazy").setup({
   { "hrsh7th/cmp-nvim-lsp" },
   { "L3MON4D3/LuaSnip" },
 
+  -- Git (minimal, powerful)
+  {
+    "tpope/vim-fugitive",
+    cmd = { "Git", "G", "Gstatus", "Gdiffsplit", "Gblame" },
+    keys = {
+      { "<leader>gs", ":Git<CR>", desc = "Git status" },
+      { "<leader>gd", ":Gdiffsplit<CR>", desc = "Git diff split" },
+      { "<leader>gb", ":Git blame<CR>", desc = "Git blame" },
+    },
+  },
+
    -- Copilot
   {
     "github/copilot.vim",
