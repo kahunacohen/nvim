@@ -46,6 +46,17 @@ require("lazy").setup({
   { "hrsh7th/cmp-nvim-lsp" },
   { "L3MON4D3/LuaSnip" },
 
+  -- Commenting
+  -- gcc  to toggle comment on current line
+  -- toggle block comment: gc<number>j (to comment current line and next <number> lines)
+  -- in visual mode: gc to toggle comment on selection
+  {
+  "numToStr/Comment.nvim",
+  config = function()
+    require("Comment").setup()
+  end,
+  },
+
   -- Git (minimal, powerful)
   {
     "tpope/vim-fugitive",
@@ -54,6 +65,7 @@ require("lazy").setup({
       { "<leader>gs", ":Git<CR>", desc = "Git status" },
       { "<leader>gd", ":Gdiffsplit<CR>", desc = "Git diff split" },
       { "<leader>gb", ":Git blame<CR>", desc = "Git blame" },
+      { "<leader>gp", ":Git pull<CR>", desc = "Git pull" },
     },
   },
 
@@ -236,9 +248,18 @@ cmp.setup({
 ------------------------------------------------------------
 -- nvim-tree
 ------------------------------------------------------------
-require("nvim-tree").setup({})
+require("nvim-tree").setup({
+  update_focused_file = { enable = true, update_root = false }
+})
 
 vim.keymap.set("n", "<leader>e", ":NvimTreeToggle<CR>")
+
+-- Jump to tree
+vim.keymap.set("n", "<leader>et", ":NvimTreeFocus<CR>", { desc = "Focus file explorer" })
+
+-- Go back to the previous window (buffer)
+vim.keymap.set("n", "<leader>eb", ":wincmd p<CR>", { desc = "Back to previous window" })
+
 
 ------------------------------------------------------------
 -- Telescope keymaps
@@ -257,6 +278,10 @@ vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename)
 vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action)
 
 ------------------------------------------------------------
+-- nvim-tree keymaps
+------------------------------------------------------------
+vim.keymap.set("n", "<leader>er", ":NvimTreeFindFile<CR>", { desc = "Reveal current file in tree" })
+
 -- Copilot keymaps 
 -------------------------------------------------------------
 vim.keymap.set("i", "<C-k>", "<Plug>(copilot-dismiss)")
