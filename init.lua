@@ -1,3 +1,17 @@
+-- This is Aaron's neovim config. Apart from plugins installed below
+-- here is a list of some generic, useful vim bindings:
+-- Move to left window: Ctrl-w h
+-- Move to down window: Ctrl-w j
+-- Move to up window: Ctrl-w k
+-- Move to right window: Ctrl-w l
+--
+-- Scrolling page:
+-- Half page down: Ctrl-d
+-- Half page up: Ctrl-u
+-- 
+-- quickfix window navigation:
+-- close: :cclose
+--
 ---------------------------------------------------------------
 --- leader keys must be set before plugins are loaded
 ------------------------------------------------------------
@@ -58,6 +72,7 @@ require("lazy").setup({
   },
 
   -- Git (minimal, powerful)
+  -- Apart from key-mappings below, you can also invoke any git command with :G. E.g. :G push
   {
     "tpope/vim-fugitive",
     cmd = { "Git", "G", "Gstatus", "Gdiffsplit", "Gblame" },
@@ -66,6 +81,7 @@ require("lazy").setup({
       { "<leader>gd", ":Gdiffsplit<CR>", desc = "Git diff split" },
       { "<leader>gb", ":Git blame<CR>", desc = "Git blame" },
       { "<leader>gp", ":Git pull<CR>", desc = "Git pull" },
+      { "<leader>gps", ":Git push<CR>", desc = "Git push" },
     },
   },
 
