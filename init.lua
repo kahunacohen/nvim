@@ -11,6 +11,11 @@
 -- 
 -- quickfix window navigation:
 -- close: :cclose
+-- 
+--  Buffers:
+--  leader b: list open buffers 
+--  leader bd: close current buffer
+--  +y yank visually selected text to system clipboard
 --
 ---------------------------------------------------------------
 --- leader keys must be set before plugins are loaded
@@ -38,7 +43,14 @@ vim.opt.rtp:prepend(lazypath)
 -- Plugins
 ------------------------------------------------------------
 require("lazy").setup({
-
+  {  -- handles automatic copying to system clipboard over SSH
+  "ojroques/nvim-osc52",
+  config = function()
+    require("osc52").setup()
+    vim.api.nvim_set_keymap("n", "<leader>y", '<cmd>lua require("osc52").copy_operator()<CR>', {noremap=true})
+    vim.api.nvim_set_keymap("v", "<leader>y", '<cmd>lua require("osc52").copy_visual()<CR>', {noremap=true})
+  end
+},
   -- Treesitter
   { "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
 
@@ -358,7 +370,20 @@ vim.keymap.set("n", "<leader>b", ":Telescope buffers<CR>")
 ------------------------------------------------------------
 vim.keymap.set("n", "gd", vim.lsp.buf.definition)
 vim.keymap.set("n", "gr", vim.lsp.buf.references)
-vim.keymap.set("n", "K", vim.lsp.buf.hover)
+-- vim.keymap.set("n", "K", vim.lsp.buf.hover)
+-- If there are diagnostics on the current line, show them instead of hover
+vim.keymap.set("n", "K", function()
+  local diagnostics = vim.diagnostic.get(0, { lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 })
+  if #diagnostics > 0 then
+    -- If there are diagnostics on this line, show them
+    vim.diagnostic.open_float()
+  else
+    -- Otherwise fall back to LSP hover
+    vim.lsp.buf.hover()
+  end
+end, { desc = "Hover or show diagnostics" })
+
+
 vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename)
 vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action)
 
@@ -423,4 +448,4 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 
-
+vim.keymap.set("n", "<leader>z", "<C-l>zz", { desc = "Redraw + center screen" })
