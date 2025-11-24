@@ -45,6 +45,19 @@ require("lazy").setup({
   -- Telescope
   { "nvim-lua/plenary.nvim" },
   { "nvim-telescope/telescope.nvim", tag = "0.1.5" },
+  {
+  "smartpde/telescope-recent-files",
+  dependencies = { "nvim-telescope/telescope.nvim" },
+  config = function()
+    require("telescope").load_extension("recent_files")
+
+    -- Keymap: <leader>rr opens recent files picker
+    vim.keymap.set("n", "<leader>rr", function()
+      require("telescope").extensions.recent_files.pick()
+    end, { desc = "Telescope - Recent Files" })
+  end,
+},
+
 
   -- File explorer
   { "nvim-tree/nvim-tree.lua" },
@@ -70,6 +83,46 @@ require("lazy").setup({
     require("Comment").setup()
   end,
   },
+
+  -- Debugging
+  {
+    "mfussenegger/nvim-dap",
+  },
+  {
+    "nvim-neotest/nvim-nio",  -- REQUIRED for dap-ui
+  },
+  {
+    "rcarriga/nvim-dap-ui",
+    dependencies = {
+      "mfussenegger/nvim-dap",
+      "nvim-neotest/nvim-nio",
+    },
+    config = function()
+      local dap = require("dap")
+      local dapui = require("dapui")
+
+      dapui.setup()
+
+      dap.listeners.after.event_initialized["dapui_config"] = function()
+        dapui.open()
+      end
+      dap.listeners.before.event_terminated["dapui_config"] = function()
+        dapui.close()
+      end
+      dap.listeners.before.event_exited["dapui_config"] = function()
+        dapui.close()
+      end
+    end,
+  },
+  {
+    "leoluz/nvim-dap-go",
+    dependencies = { "mfussenegger/nvim-dap" },
+    ft = "go",
+    config = function()
+      require("dap-go").setup()
+    end,
+  },
+
 
   -- Git (minimal, powerful)
   -- Apart from key-mappings below, you can also invoke any git command with :G. E.g. :G push
@@ -229,10 +282,26 @@ for name, config in pairs(servers) do
   vim.lsp.enable(name)
 end
 
--- Format Go files on save
+-- Go: format + organize imports on save
 vim.api.nvim_create_autocmd("BufWritePre", {
   pattern = "*.go",
   callback = function()
+    -- organize imports
+    local params = vim.lsp.util.make_range_params()
+    params.context = { only = { "source.organizeImports" } }
+
+    local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params, 1000)
+    for _, res in pairs(result or {}) do
+      for _, r in pairs(res.result or {}) do
+        if r.edit then
+          vim.lsp.util.apply_workspace_edit(r.edit, "utf-16")
+        else
+          vim.lsp.buf.execute_command(r.command)
+        end
+      end
+    end
+
+    -- then format
     vim.lsp.buf.format({ async = false })
   end,
 })
@@ -294,6 +363,41 @@ vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename)
 vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action)
 
 ------------------------------------------------------------
+-- DAP keymaps (Go debugging)
+------------------------------------------------------------
+local dap = require("dap")
+local dapui = require("dapui")
+
+-- Toggle breakpoint
+vim.keymap.set("n", "<leader>db", function()
+  dap.toggle_breakpoint()
+end, { desc = "DAP: Toggle breakpoint" })
+
+-- Run / continue
+vim.keymap.set("n", "<leader>dc", function()
+  dap.continue()
+end, { desc = "DAP: Continue" })
+
+-- Step over / into / out
+vim.keymap.set("n", "<leader>do", function()
+  dap.step_over()
+end, { desc = "DAP: Step over" })
+
+vim.keymap.set("n", "<leader>di", function()
+  dap.step_into()
+end, { desc = "DAP: Step into" })
+
+vim.keymap.set("n", "<leader>du", function()
+  dap.step_out()
+end, { desc = "DAP: Step out" })
+
+-- Toggle DAP UI (if you ever want to manually open/close)
+vim.keymap.set("n", "<leader>dui", function()
+  dapui.toggle()
+end, { desc = "DAP: Toggle UI" })
+
+
+------------------------------------------------------------
 -- nvim-tree keymaps
 ------------------------------------------------------------
 vim.keymap.set("n", "<leader>er", ":NvimTreeFindFile<CR>", { desc = "Reveal current file in tree" })
@@ -308,5 +412,15 @@ vim.keymap.set("n", "<leader>cd", ":Copilot disable<CR>", { silent = true })
 -- Colorscheme
 ------------------------------------------------------------
 vim.cmd.colorscheme("catppuccin")
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "go",
+  callback = function()
+    vim.opt.tabstop = 4      -- how many spaces a TAB counts for visually
+    vim.opt.shiftwidth = 4   -- how many spaces ">>" and "<<" indent
+    vim.opt.softtabstop = 4  -- how many spaces <Tab> inserts in insert mode
+  end,
+})
+
 
 
