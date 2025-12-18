@@ -13,10 +13,11 @@
 -- close: :cclose
 -- 
 --  Buffers:
+--  :wa: write all buffers
 --  leader b: list open buffers 
 --  leader bd: close current buffer
---  +y yank visually selected text to system clipboard
---
+--  leader y: yank visually selected text to system clipboard
+-- 
 ---------------------------------------------------------------
 --- leader keys must be set before plugins are loaded
 ------------------------------------------------------------
@@ -151,6 +152,13 @@ require("lazy").setup({
   },
 
    -- Copilot
+  -- Open CopilotChat: <leader>cc
+  -- Accept suggestion: Ctrl-J in insert mode
+  -- Dismiss suggestion: Ctrl-K in insert mode
+  -- Enable Copilot: <leader>ce
+  -- Disable Copilot: <leader>cd
+  -- To send context to chat: visually select text and press <leader>ca
+  -- To send whole buffer to chat: buffer:active, enter questions and press escape and return
   {
     "github/copilot.vim",
     config = function()
@@ -163,29 +171,39 @@ require("lazy").setup({
       })
     end,
   },
-  {
+{
   "CopilotC-Nvim/CopilotChat.nvim",
   dependencies = {
     "github/copilot.vim",
     "nvim-lua/plenary.nvim",
   },
   config = function()
-    require("CopilotChat").setup({
+    local CopilotChat = require("CopilotChat")
+    local select = require("CopilotChat.select")
+
+    CopilotChat.setup({
       insert_mode = false,
     })
 
-    -- Sidebar-style chat (best UX)
+    -- Sidebar-style chat, with ENTIRE BUFFER as selection
     vim.keymap.set("n", "<leader>cc", function()
-      require("CopilotChat").open({
+      CopilotChat.open({
         window = { layout = "vertical" },
+        selection = select.buffer,
+        -- optional: also make the context sticky in the chat prompt
         context = "buffer",
       })
-    end, { desc = "Open Copilot Chat" })
+    end, { desc = "Open Copilot Chat (buffer context)" })
 
-    -- Ask about selection
+    -- Ask about visual selection
     vim.keymap.set("v", "<leader>ca", function()
-      require("CopilotChat").ask()
-    end, { desc = "Ask Copilot About Selection" })
+      local input = vim.fn.input("CopilotChat: ")
+      if input ~= "" then
+        CopilotChat.ask(input, {
+          selection = select.visual,  -- visual selection as context
+        })
+      end
+    end, { desc = "Ask Copilot about selection" })
   end,
 },
 
@@ -449,3 +467,16 @@ vim.api.nvim_create_autocmd("FileType", {
 
 
 vim.keymap.set("n", "<leader>z", "<C-l>zz", { desc = "Redraw + center screen" })
+
+-- restore cursor position when reopening files
+vim.api.nvim_create_autocmd("BufReadPost", {
+  pattern = "*",
+  callback = function()
+    local mark = vim.api.nvim_buf_get_mark(0, '"')
+    local lcount = vim.api.nvim_buf_line_count(0)
+    if mark[1] > 1 and mark[1] <= lcount then
+      pcall(vim.api.nvim_win_set_cursor, 0, mark)
+    end
+  end,
+})
+
