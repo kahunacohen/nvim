@@ -81,6 +81,45 @@ require("lazy").setup({
   { "williamboman/mason.nvim" },
   { "williamboman/mason-lspconfig.nvim" },
 
+  -- Formatter (Prettier, etc.)
+{
+  "stevearc/conform.nvim",
+  event = { "BufReadPre", "BufNewFile" },
+  config = function()
+    local conform = require("conform")
+
+    conform.setup({
+      formatters_by_ft = {
+        javascript = { "prettierd", "prettier", stop_after_first = true },
+        typescript = { "prettierd", "prettier", stop_after_first = true },
+        javascriptreact = { "prettierd", "prettier", stop_after_first = true },
+        typescriptreact = { "prettierd", "prettier", stop_after_first = true },
+
+        json = { "prettierd", "prettier", stop_after_first = true },
+        yaml = { "prettierd", "prettier", stop_after_first = true },
+        markdown = { "prettierd", "prettier", stop_after_first = true },
+        html = { "prettierd", "prettier", stop_after_first = true },
+        css = { "prettierd", "prettier", stop_after_first = true },
+        scss = { "prettierd", "prettier", stop_after_first = true },
+      },
+
+      -- Optional: if you want conform to do format-on-save globally,
+      -- you can enable this. (I show a JS/TS-only autocmd below instead.)
+      -- format_on_save = { timeout_ms = 1500, lsp_format = "fallback" },
+    })
+
+    -- Run formatter on-demand (normal + visual)
+    vim.keymap.set({ "n", "v" }, "<leader>p", function()
+      conform.format({ async = true, lsp_format = "fallback" })
+    end, { desc = "Format (Prettier via conform)" })
+
+    -- Optional: a :Format command (handy muscle memory)
+    vim.api.nvim_create_user_command("Format", function()
+      conform.format({ async = true, lsp_format = "fallback" })
+    end, {})
+  end,
+},
+
   -- Completion
   { "hrsh7th/nvim-cmp" },
   { "hrsh7th/cmp-nvim-lsp" },
@@ -148,6 +187,8 @@ require("lazy").setup({
       { "<leader>gb", ":Git blame<CR>", desc = "Git blame" },
       { "<leader>gp", ":Git pull<CR>", desc = "Git pull" },
       { "<leader>gps", ":Git push<CR>", desc = "Git push" },
+      { "<leader>gco", ":Git push<CR>", desc = "Git checkout" },
+      { "<leader>gbr", ":Git push<CR>", desc = "Git branch" },
     },
   },
 
@@ -476,6 +517,63 @@ vim.api.nvim_create_autocmd("BufReadPost", {
     local lcount = vim.api.nvim_buf_line_count(0)
     if mark[1] > 1 and mark[1] <= lcount then
       pcall(vim.api.nvim_win_set_cursor, 0, mark)
+    end
+  end,
+})
+
+
+------------------------------------------------------------
+-- Winbar: show "won't compile" indicator for current buffer
+-- (uses LSP diagnostics, e.g. gopls errors)
+------------------------------------------------------------
+
+-- Highlight groups (re-link after colorscheme changes)
+local function setup_winbar_hl()
+  vim.api.nvim_set_hl(0, "WinbarErr", { link = "DiagnosticError" })
+  vim.api.nvim_set_hl(0, "WinbarOk",  { link = "DiagnosticHint" })
+  vim.api.nvim_set_hl(0, "WinbarFile",{ link = "Title" })
+end
+
+setup_winbar_hl()
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = setup_winbar_hl,
+})
+
+local function set_winbar_for(winid, bufnr)
+  if not vim.api.nvim_win_is_valid(winid) then return end
+  if not vim.api.nvim_buf_is_valid(bufnr) then return end
+  if vim.bo[bufnr].buftype ~= "" then return end -- skip terminals, etc.
+
+  local name = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":t")
+  if name == "" then name = "[No Name]" end
+
+  local err_count = #vim.diagnostic.get(bufnr, { severity = vim.diagnostic.severity.ERROR })
+
+  if err_count > 0 then
+    vim.api.nvim_win_set_option(winid, "winbar",
+      string.format("%%#WinbarErr#✗ %d error%s%%*  %%#WinbarFile#%s%%*",
+        err_count, (err_count == 1 and "" or "s"), name
+      )
+    )
+  else
+    vim.api.nvim_win_set_option(winid, "winbar",
+      string.format("%%#WinbarOk#✓%%*  %%#WinbarFile#%s%%*", name)
+    )
+  end
+end
+
+-- Update winbar when entering buffers/windows or when diagnostics change
+vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "WinEnter" }, {
+  callback = function(args)
+    set_winbar_for(0, args.buf)
+  end,
+})
+
+vim.api.nvim_create_autocmd("DiagnosticChanged", {
+  callback = function(args)
+    -- only update if the changed diagnostics belong to the current buffer
+    if args.buf == vim.api.nvim_get_current_buf() then
+      set_winbar_for(0, args.buf)
     end
   end,
 })
